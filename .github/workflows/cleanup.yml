@@ -1,0 +1,36 @@
+name: Cleanup preview
+
+# После закрытия или слияния PR задачи убираем её превью из gh-pages: бета и прод остаются.
+on:
+  pull_request:
+    types: [closed]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: pages-cleanup
+  cancel-in-progress: false
+
+jobs:
+  cleanup:
+    if: startsWith(github.event.pull_request.head.ref, 'claude/task-')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { ref: gh-pages }
+      - name: Удалить превью задачи
+        env:
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+        run: |
+          TASK="${HEAD_REF#claude/task-}"
+          TASK="${TASK%%-*}"
+          git rm -r -q --ignore-unmatch "preview/task-$TASK" "preview/task-$TASK"-* || true
+          if git diff --cached --quiet; then echo "превью уже нет"; exit 0; fi
+          git -c user.name=github-actions -c user.email=github-actions@users.noreply.github.com commit -q -m "Убрать превью задачи $TASK"
+          # Параллельный деплой мог сдвинуть gh-pages: перебираем несколько раз.
+          for i in 1 2 3 4; do
+            git push && exit 0
+            git pull --rebase -q
+          done
+          exit 1
