@@ -2,27 +2,21 @@ name: Preview
 
 on:
   push:
-    branches: ['claude/issue-*', 'hermes/issue-*']
-  # Пуш агента от имени GITHUB_TOKEN не запускает workflow, поэтому Hermes вызывает превью вручную.
-  workflow_dispatch:
-    inputs:
-      branch:
-        description: Ветка задачи
-        required: true
+    branches: ['claude/task-*']
 
 permissions:
   contents: write
-  issues: write
+  pull-requests: write
 
 concurrency:
-  group: preview-${{ github.event.inputs.branch || github.ref_name }}
+  group: preview-${{ github.ref_name }}
   cancel-in-progress: true
 
 jobs:
   preview:
     runs-on: ubuntu-latest
     env:
-      BRANCH: ${{ github.event.inputs.branch || github.ref_name }}
+      BRANCH: ${{ github.ref_name }}
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - uses: actions/checkout@v4
@@ -31,30 +25,31 @@ jobs:
         with: { node-version: 22, cache: npm }
       - run: npm ci
       - name: Номер задачи
-        run: echo "ISSUE=${BRANCH##*issue-}" >> "$GITHUB_ENV"
+        run: echo "ISSUE=${BRANCH##*task-}" >> "$GITHUB_ENV"
       - name: Тесты
         id: tests
         continue-on-error: true
         run: npx playwright install --with-deps chromium && npm test
       - name: Сборка превью
-        run: BASE=/coffee-site/preview/issue-$ISSUE/ npm run build
+        run: BASE=/coffee-site/preview/task-$ISSUE/ npm run build
       - uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: dist
-          destination_dir: preview/issue-${{ env.ISSUE }}
+          destination_dir: preview/task-${{ env.ISSUE }}
           keep_files: true
       - uses: peaceiris/actions-gh-pages@v4
         if: always()
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: playwright-report
-          destination_dir: preview/issue-${{ env.ISSUE }}-report
+          destination_dir: preview/task-${{ env.ISSUE }}-report
           keep_files: true
       - name: Ссылки в задачу
         run: |
           result=$([ "${{ steps.tests.outcome }}" = "success" ] && echo "зелёные" || echo "КРАСНЫЕ")
-          gh issue comment "$ISSUE" --body "## Превью
-          - Сайт: https://ilyavasiliev1.github.io/coffee-site/preview/issue-$ISSUE/
-          - Отчёт тестов со скриншотами: https://ilyavasiliev1.github.io/coffee-site/preview/issue-$ISSUE-report/
-          - Тесты в облаке: $result"
+          # Первый пуш приходит раньше, чем агент откроет PR: пропускаем, превью обновится со следующим коммитом.
+          gh pr comment "$BRANCH" --body "## Превью
+          - Сайт: https://ilyavasiliev1.github.io/coffee-site/preview/task-$ISSUE/
+          - Отчёт тестов со скриншотами: https://ilyavasiliev1.github.io/coffee-site/preview/task-$ISSUE-report/
+          - Тесты в облаке: $result" || echo "PR ещё не открыт, комментарий пропущен"
