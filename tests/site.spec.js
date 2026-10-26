@@ -17,6 +17,13 @@ test('корзина считает добавленные позиции', asyn
   await expect(page.locator('#cart-count')).toHaveText('1');
 });
 
+test('в подвале есть строка «Работаем без выходных»', async ({ page }) => {
+  await page.goto('/');
+  const footer = page.locator('footer');
+  await footer.scrollIntoViewIfNeeded();
+  await expect(footer).toContainText('Работаем без выходных');
+});
+
 test('«Раф» стоит 300 ₽ и лежит в категории «Эспрессо»', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('button', { name: 'Эспрессо', exact: true }).click();
