@@ -14,17 +14,20 @@ concurrency:
 
 jobs:
   cleanup:
-    if: startsWith(github.event.pull_request.head.ref, 'claude/task-')
+    if: >-
+      startsWith(github.event.pull_request.head.ref, 'claude/') &&
+      github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with: { ref: gh-pages }
       - name: Удалить превью задачи
         env:
-          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+          TITLE: ${{ github.event.pull_request.title }}
+          PR: ${{ github.event.pull_request.number }}
         run: |
-          TASK="${HEAD_REF#claude/task-}"
-          TASK="${TASK%%-*}"
+          TASK=$(printf '%s' "$TITLE" | sed -nE 's/^\[#([0-9]+)\].*/\1/p')
+          TASK="${TASK:-pr$PR}"
           git rm -r -q --ignore-unmatch "preview/task-$TASK" "preview/task-$TASK"-* || true
           if git diff --cached --quiet; then echo "превью уже нет"; exit 0; fi
           git -c user.name=github-actions -c user.email=github-actions@users.noreply.github.com commit -q -m "Убрать превью задачи $TASK"

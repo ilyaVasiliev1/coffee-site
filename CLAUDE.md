@@ -13,7 +13,7 @@ Vite, чистый JS и CSS без фреймворков. Тесты Playwrigh
 
 - `main` прод: `https://ilyavasiliev1.github.io/coffee-site/`
 - `staging` бета: `https://ilyavasiliev1.github.io/coffee-site/staging/`
-- `claude/task-N` ветка задачи с превью `/coffee-site/preview/task-N/` и отчётом тестов `/coffee-site/preview/task-N-report/`
+- ветки задач `claude/…` (имя назначает облако), заголовок PR `[#N] …`; превью `/coffee-site/preview/task-N/`, отчёт тестов `/coffee-site/preview/task-N-report/`
 
 Прямые пуши в `main` и `staging` делает только человек через доску; агент работает через PR в `staging`.
 
