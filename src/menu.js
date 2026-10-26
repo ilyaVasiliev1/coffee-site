@@ -8,4 +8,5 @@ export const items = [
   { id: 5, name: 'Аэропресс', category: 'Фильтр', price: 270 },
   { id: 6, name: 'Чизкейк', category: 'Десерты', price: 250 },
   { id: 7, name: 'Круассан', category: 'Десерты', price: 180 },
+  { id: 8, name: 'Раф', category: 'Эспрессо', price: 290 },
 ];
