@@ -7,7 +7,7 @@
 Vite, чистый JS и CSS без фреймворков. Тесты Playwright в Chromium на локальной сборке.
 
 - `npm run dev` порт 5193.
-- `npm test` собирает сайт, поднимает preview на 4173 и гоняет тесты.
+- `npm test` собирает сайт, поднимает preview на 4173 и гоняет тесты. В облаке Claude браузер берётся из `/opt/pw-browsers/chromium` автоматически (`playwright.config.js`), `playwright install` там не нужен.
 
 ## Ветки и стенды
 
