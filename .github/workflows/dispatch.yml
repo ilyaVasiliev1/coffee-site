@@ -55,6 +55,14 @@ jobs:
         with: { fetch-depth: 0 }
       - uses: actions/setup-node@v4
         with: { node-version: 22, cache: npm }
+      - name: Проверка ключа
+        run: |
+          if [ -z "$ANTHROPIC_API_KEY" ]; then
+            gh issue edit "$N" --remove-label st:queued --add-label st:failed
+            gh issue comment "$N" --body "## Отчёт
+          Hermes не запущен: в секретах репозитория нет ANTHROPIC_API_KEY. Добавьте его и нажмите «Запустить снова»."
+            exit 1
+          fi
       - run: |
           git config user.name "hermes-agent"
           git config user.email "hermes-agent@users.noreply.github.com"
@@ -73,8 +81,8 @@ jobs:
       - name: Пометить провал, если задача осталась в работе
         if: always()
         run: |
-          if gh issue view "$N" --json labels -q '.labels[].name' | grep -qx 'st:running'; then
-            gh issue edit "$N" --remove-label st:running --add-label st:failed
+          if gh issue view "$N" --json labels -q '.labels[].name' | grep -qxE 'st:running|st:queued'; then
+            gh issue edit "$N" --remove-label st:running --remove-label st:queued --add-label st:failed
             gh issue comment "$N" --body "## Отчёт
-          Hermes завершился, не переведя задачу в st:review. Лог: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          Hermes завершился, не переведя задачу в st:review (или не стартовал). Лог: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
           fi
