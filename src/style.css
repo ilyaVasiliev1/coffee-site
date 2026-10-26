@@ -14,5 +14,8 @@ main { max-width: 640px; margin: 0 auto; padding: 24px; }
 button { font: inherit; cursor: pointer; border: 1px solid var(--accent); background: transparent; color: var(--accent); border-radius: 999px; padding: 6px 14px; }
 .chip[aria-pressed='true'] { background: var(--accent); color: #fff; }
 .menu { list-style: none; margin: 0; padding: 0; }
-.item { display: grid; grid-template-columns: 1fr auto auto; gap: 16px; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--line); }
+.item { display: grid; grid-template-columns: 1fr auto auto auto; gap: 16px; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--line); }
 footer { text-align: center; padding: 24px; color: #7a6a5c; }
+.photo-dialog { border: 1px solid var(--line); border-radius: 12px; padding: 16px; background: var(--bg); color: var(--ink); text-align: center; }
+.photo-dialog::backdrop { background: rgba(43, 29, 20, 0.5); }
+.photo { display: block; max-width: 100%; border-radius: 8px; }
