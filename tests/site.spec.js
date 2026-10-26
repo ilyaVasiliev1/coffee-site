@@ -17,10 +17,10 @@ test('корзина считает добавленные позиции', asyn
   await expect(page.locator('#cart-count')).toHaveText('1');
 });
 
-test('«Раф» стоит 290 ₽ и лежит в категории «Эспрессо»', async ({ page }) => {
+test('«Раф» стоит 300 ₽ и лежит в категории «Эспрессо»', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('button', { name: 'Эспрессо', exact: true }).click();
   const raf = page.locator('#menu .item', { hasText: 'Раф' });
   await expect(raf).toHaveCount(1);
-  await expect(raf).toContainText('290');
+  await expect(raf).toContainText('300');
 });
