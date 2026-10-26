@@ -27,7 +27,9 @@ jobs:
       - run: npm ci
       - name: Параметры
         run: |
-          echo "TASK=${BRANCH##*task-}" >> "$GITHUB_ENV"
+          # Облако дописывает к ветке хвост (claude/task-5-bxeue1): номер задачи это число сразу после task-.
+          TASK="${BRANCH#claude/task-}"
+          echo "TASK=${TASK%%-*}" >> "$GITHUB_ENV"
           echo "REPO=${GITHUB_REPOSITORY#*/}" >> "$GITHUB_ENV"
           echo "SITE=https://${GITHUB_REPOSITORY_OWNER,,}.github.io/${GITHUB_REPOSITORY#*/}" >> "$GITHUB_ENV"
       - name: Тесты
