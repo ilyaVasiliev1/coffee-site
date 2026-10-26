@@ -1,0 +1,63 @@
+name: Status
+
+# Снимок облачных задач для страницы «Облако» на сервере: читает PR репозитория и кладёт status JSON и саму страницу.
+# Нужны те же секреты, что у Deploy (DEPLOY_*). Название проекта: переменная репозитория PROJECT_TITLE (по умолчанию имя репозитория).
+# Код сборки снимка и страница берутся из публичного репозитория agent-board: единый источник для всех проектов.
+on:
+  pull_request:
+    types: [opened, edited, synchronize, ready_for_review, converted_to_draft, reopened, closed]
+  issue_comment:
+    types: [created]
+  workflow_run:
+    workflows: [Preview, Deploy]
+    types: [completed]
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: status
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  snapshot:
+    # По PR реагируем только на ветки агента из этого же репозитория.
+    if: >-
+      github.event_name != 'pull_request' ||
+      (startsWith(github.event.pull_request.head.ref, 'claude/') && github.event.pull_request.head.repo.full_name == github.repository)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      PROJECT_TITLE: ${{ vars.PROJECT_TITLE || github.event.repository.name }}
+      STAGING_URL: http://${{ secrets.DEPLOY_HOST }}:8080/
+      PROD_URL: http://${{ secrets.DEPLOY_HOST }}/
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: ilyaVasiliev1/agent-board
+          ref: main
+          path: board
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Снимок
+        run: node board/server/snapshot.mjs "$GITHUB_REPOSITORY" > status.json
+      - name: Публикация на сервер
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          SSH="ssh -i ~/.ssh/deploy_key -o IdentitiesOnly=yes"
+          # Страница: свежая версия из agent-board; data/ с чужими снимками не трогаем.
+          rsync -rt --delete --filter='P data/' -e "$SSH" board/web/ "$DEPLOY_USER@$DEPLOY_HOST:monitor/"
+          rsync -t -e "$SSH" status.json "$DEPLOY_USER@$DEPLOY_HOST:monitor/data/${GITHUB_REPOSITORY#*/}.json"
