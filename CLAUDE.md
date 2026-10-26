@@ -1,0 +1,24 @@
+# coffee-site
+
+Демо-проект для доски агентов: одностраничный сайт кофейни «Зерно». Публичный, хостинг GitHub Pages.
+
+## Стек и команды
+
+Vite, чистый JS и CSS без фреймворков. Тесты Playwright в Chromium на локальной сборке.
+
+- `npm run dev` порт 5193.
+- `npm test` собирает сайт, поднимает preview на 4173 и гоняет тесты.
+
+## Ветки и стенды
+
+- `main` прод: `https://ilyavasiliev1.github.io/coffee-site/`
+- `staging` бета: `https://ilyavasiliev1.github.io/coffee-site/staging/`
+- `<движок>/issue-N` ветка задачи с превью `/coffee-site/preview/issue-N/`
+
+Прямые пуши в `main` и `staging` делает только человек через доску; агент работает через PR в `staging`.
+
+## Правила
+
+- Меню лежит в `src/menu.js`, цены в рублях.
+- Базовый путь сборки задаёт `BASE`, пути в коде только относительные.
+- Протокол работы агента: `.agent/PROTOCOL.md`.

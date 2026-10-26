@@ -1,0 +1,31 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main, staging]
+
+concurrency:
+  group: pages-${{ github.ref_name }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - name: Build
+        run: |
+          if [ "$GITHUB_REF_NAME" = "main" ]; then BASE=/coffee-site/ npm run build; else BASE=/coffee-site/staging/ npm run build; fi
+      - uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: dist
+          # Прод лежит в корне ветки gh-pages, beta и превью в подпапках: keep_files не даёт стереть соседей.
+          destination_dir: ${{ github.ref_name == 'main' && '.' || 'staging' }}
+          keep_files: true
