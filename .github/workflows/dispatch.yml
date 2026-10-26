@@ -12,8 +12,10 @@ permissions:
   actions: write
 
 jobs:
+  # Запасной путь для Claude без Мака: включается переменной репозитория CLAUDE_FIRE_ENABLED=true и секретами routine.
+  # Основной путь Claude: harness/tools/board.sh с Мака (claude --cloud).
   claude:
-    if: github.event.label.name == 'st:queued' && contains(github.event.issue.labels.*.name, 'engine:claude')
+    if: vars.CLAUDE_FIRE_ENABLED == 'true' && github.event.label.name == 'st:queued' && contains(github.event.issue.labels.*.name, 'engine:claude')
     runs-on: ubuntu-latest
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
