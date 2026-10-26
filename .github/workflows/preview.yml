@@ -1,5 +1,6 @@
 name: Preview
 
+# Превью задачи агента: тесты, сборка в /preview/task-N/, отчёт тестов, ссылки комментарием в PR.
 on:
   push:
     branches: ['claude/task-*']
@@ -24,32 +25,35 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: 22, cache: npm }
       - run: npm ci
-      - name: Номер задачи
-        run: echo "ISSUE=${BRANCH##*task-}" >> "$GITHUB_ENV"
+      - name: Параметры
+        run: |
+          echo "TASK=${BRANCH##*task-}" >> "$GITHUB_ENV"
+          echo "REPO=${GITHUB_REPOSITORY#*/}" >> "$GITHUB_ENV"
+          echo "SITE=https://${GITHUB_REPOSITORY_OWNER,,}.github.io/${GITHUB_REPOSITORY#*/}" >> "$GITHUB_ENV"
       - name: Тесты
         id: tests
         continue-on-error: true
         run: npx playwright install --with-deps chromium && npm test
       - name: Сборка превью
-        run: BASE=/coffee-site/preview/task-$ISSUE/ npm run build
+        run: BASE="/$REPO/preview/task-$TASK/" npm run build
       - uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: dist
-          destination_dir: preview/task-${{ env.ISSUE }}
+          destination_dir: preview/task-${{ env.TASK }}
           keep_files: true
       - uses: peaceiris/actions-gh-pages@v4
         if: always()
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: playwright-report
-          destination_dir: preview/task-${{ env.ISSUE }}-report
+          destination_dir: preview/task-${{ env.TASK }}-report
           keep_files: true
-      - name: Ссылки в задачу
+      - name: Ссылки в PR
         run: |
           result=$([ "${{ steps.tests.outcome }}" = "success" ] && echo "зелёные" || echo "КРАСНЫЕ")
           # Первый пуш приходит раньше, чем агент откроет PR: пропускаем, превью обновится со следующим коммитом.
           gh pr comment "$BRANCH" --body "## Превью
-          - Сайт: https://ilyavasiliev1.github.io/coffee-site/preview/task-$ISSUE/
-          - Отчёт тестов со скриншотами: https://ilyavasiliev1.github.io/coffee-site/preview/task-$ISSUE-report/
+          - Сайт: $SITE/preview/task-$TASK/
+          - Отчёт тестов со скриншотами: $SITE/preview/task-$TASK-report/
           - Тесты в облаке: $result" || echo "PR ещё не открыт, комментарий пропущен"

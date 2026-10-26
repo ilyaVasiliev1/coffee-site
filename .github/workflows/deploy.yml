@@ -1,5 +1,6 @@
 name: Deploy
 
+# Шаблон для Vite-проектов на GitHub Pages: main в корень, staging в /staging/. Для другого стека правится только шаг сборки.
 on:
   push:
     branches: [main, staging]
@@ -19,9 +20,10 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: 22, cache: npm }
       - run: npm ci
-      - name: Build
+      - name: Сборка
         run: |
-          if [ "$GITHUB_REF_NAME" = "main" ]; then BASE=/coffee-site/ npm run build; else BASE=/coffee-site/staging/ npm run build; fi
+          REPO="${GITHUB_REPOSITORY#*/}"
+          if [ "$GITHUB_REF_NAME" = "main" ]; then BASE="/$REPO/" npm run build; else BASE="/$REPO/staging/" npm run build; fi
       - uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
